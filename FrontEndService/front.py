@@ -1,9 +1,26 @@
 import datetime
+import subprocess
+import time
 
 import dash
+import requests
 from dash import dcc, html, Input, Output, State, callback
 
 
+# Start FastAPI server if not already running
+def start_backend():
+    try:
+        response = requests.get("http://localhost:8000")
+        if response.status_code == 200:
+            print("Backend is already running.")
+            return
+    except requests.exceptions.ConnectionError:
+        print("Starting backend...")
+        subprocess.Popen(["uvicorn", "BackEndService.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"])
+        time.sleep(2)  # Give it time to start
+
+
+start_backend()
 
 # STATIC OPTIONS
 USER_TYPES = ["runner", "photographer"]
@@ -32,6 +49,7 @@ app.layout = html.Div([
             for field_name, field_type in RUNNER_INPUT_FIELDS.items()
         ],
         html.Br(),
+        html.Button("Submit", id="submit-btn"),
         html.Div(id="runner-outputs"),
     ]),
     html.Br(),
@@ -59,13 +77,19 @@ app.layout = html.Div([
 ])
 
 
-# render the input values to screen
-@callback(
+# FIXME: button makes requests like crazy
+# TODO: checkout dash handling each trigger
+# integrating with backend!
+@app.callback(
     Output("runner-outputs", "children"),
-    [Input("input_{}".format(field_name), "value") for field_name, field_type in RUNNER_INPUT_FIELDS.items()], suppress_callback_exceptions=True
+    [Input("submit-btn", "n_clicks")]
+    + [Input("input_{}".format(field_name), "value") for field_name, field_type in RUNNER_INPUT_FIELDS.items()],
+    prevent_initial_call=True
 )
-def render_runner_outputs(*vals):
-    return " | ".join((str(val) for val in vals if val))
+def send_request(n_clicks, *inputs):
+    payload = {field_name: value for field_name, value in zip(RUNNER_INPUT_FIELDS.keys(), inputs)}
+    response = requests.post("http://localhost:8000/submit-data", json=payload)
+    return response.json().get("message", "No message returned from server.")
 
 
 # parse image upload contents
@@ -87,9 +111,9 @@ def parse_contents(contents, filename, date):
 
 
 @callback(Output('image-upload-outputs', 'children'),
-              Input('upload-image', 'contents'),
-              State('upload-image', 'filename'),
-              State('upload-image', 'last_modified'))
+          Input('upload-image', 'contents'),
+          State('upload-image', 'filename'),
+          State('upload-image', 'last_modified'))
 def update_output(list_of_contents, list_of_names, list_of_dates):
     if list_of_contents is not None:
         children = [
