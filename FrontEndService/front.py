@@ -2,6 +2,8 @@ import datetime
 import subprocess
 import time
 
+
+import base64
 import dash
 import requests
 from dash import dcc, html, Input, Output, State, callback
@@ -18,7 +20,6 @@ def start_backend():
         print("Starting backend...")
         subprocess.Popen(["uvicorn", "BackEndService.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"])
         time.sleep(2)  # Give it time to start
-
 
 start_backend()
 
@@ -70,20 +71,20 @@ app.layout = html.Div([
             'margin': '10px'
         },
         # Allow multiple files to be uploaded
-        multiple=True
+        multiple=False,
     ),
     html.Br(),
-    html.Div(id="image-upload-outputs"),
+    html.Img(id="image-preview", style={"maxWidth": "300px"}),
+    html.Div(id="upload-status"),
+    # html.Div(id="image-upload-outputs"),
 ])
 
 
-# FIXME: button makes requests like crazy
-# TODO: checkout dash handling each trigger
 # integrating with backend!
-@app.callback(
+@callback(
     Output("runner-outputs", "children"),
-    [Input("submit-btn", "n_clicks")]
-    + [Input("input_{}".format(field_name), "value") for field_name, field_type in RUNNER_INPUT_FIELDS.items()],
+    Input("submit-btn", "n_clicks"),
+    *[State("input_{}".format(field_name), "value") for field_name, field_type in RUNNER_INPUT_FIELDS.items()],
     prevent_initial_call=True
 )
 def send_request(n_clicks, *inputs):
@@ -92,34 +93,47 @@ def send_request(n_clicks, *inputs):
     return response.json().get("message", "No message returned from server.")
 
 
-# parse image upload contents
-def parse_contents(contents, filename, date):
-    return html.Div([
-        html.H5(filename),
-        html.H6(datetime.datetime.fromtimestamp(date)),
 
-        # HTML images accept base64 encoded strings in the same format
-        # that is supplied by the upload
-        html.Img(src=contents),
-        html.Hr(),
-        html.Div('Raw Content'),
-        html.Pre(contents[0:200] + '...', style={
-            'whiteSpace': 'pre-wrap',
-            'wordBreak': 'break-all'
-        })
-    ])
+@app.callback(
+    Output("upload-status", "children"),
+    Output("image-preview", "src"),
+    Input("upload-image", "contents"),
+    State("upload-image", "filename"),
+    prevent_initial_call=True
+)
+def upload_image(contents, filename):
+    if contents is not None:
+        # Decode the image from Dash
+        _, content_string = contents.split(',')
+        image_data = base64.b64decode(content_string)
 
+        # Send image to backend
+        files = {"file": (filename, image_data, "image/png")}
+        response = requests.post("http://localhost:8000/upload", files=files)
 
-@callback(Output('image-upload-outputs', 'children'),
-          Input('upload-image', 'contents'),
-          State('upload-image', 'filename'),
-          State('upload-image', 'last_modified'))
-def update_output(list_of_contents, list_of_names, list_of_dates):
-    if list_of_contents is not None:
-        children = [
-            parse_contents(c, n, d) for c, n, d in
-            zip(list_of_contents, list_of_names, list_of_dates)]
-        return children
+        if response.status_code == 200:
+            return "Upload Successful!", contents
+        else:
+            return "Upload Failed!", None
+
+# # parse image upload contents
+# def parse_contents(contents, filename, date):
+#     return html.Div([
+#         html.H5(filename),
+#         html.H6(datetime.datetime.fromtimestamp(date)),
+#
+#         # HTML images accept base64 encoded strings in the same format
+#         # that is supplied by the upload
+#         html.Img(src=contents),
+#         html.Hr(),
+#         html.Div('Raw Content'),
+#         html.Pre(contents[0:200] + '...', style={
+#             'whiteSpace': 'pre-wrap',
+#             'wordBreak': 'break-all'
+#         })
+#     ])
+#
+#
 
 
 # Run the app

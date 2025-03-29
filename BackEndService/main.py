@@ -15,10 +15,10 @@ class UserData(BaseModel):
 def receive_data(user: UserData):
     return {"message": f"Received data for {user.race_name} -> {user.bib_number}"}
 
-#
-# @app.post("/upload")
-# async def upload_image(file: UploadFile = File(...)):
-#     file_path = UPLOAD_FOLDER / file.filename
-#     with file_path.open("wb") as buffer:
-#         shutil.copyfileobj(file.file, buffer)
-#     return {"filename": file.filename, "message": "Upload successful!"}
+
+@app.post("/upload")
+async def upload_image(file: UploadFile = File(...)):
+    file_path = UPLOAD_FOLDER / file.filename
+    with file_path.open("wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+    return {"filename": file.filename, "message": "Upload successful!"}
