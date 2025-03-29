@@ -1,9 +1,7 @@
-import datetime
+import base64
 import subprocess
 import time
 
-
-import base64
 import dash
 import requests
 from dash import dcc, html, Input, Output, State, callback
@@ -22,6 +20,7 @@ def start_backend():
         time.sleep(2)  # Give it time to start
 
 start_backend()
+
 
 # STATIC OPTIONS
 USER_TYPES = ["runner", "photographer"]
@@ -71,12 +70,11 @@ app.layout = html.Div([
             'margin': '10px'
         },
         # Allow multiple files to be uploaded
-        multiple=False,
+        multiple=True,
     ),
     html.Br(),
     html.Img(id="image-preview", style={"maxWidth": "300px"}),
     html.Div(id="upload-status"),
-    # html.Div(id="image-upload-outputs"),
 ])
 
 
@@ -93,28 +91,49 @@ def send_request(n_clicks, *inputs):
     return response.json().get("message", "No message returned from server.")
 
 
+def preview_image(content, filename, status_code):
+    status_emojis = {
+        200: "✅", 400: "⚠️", 404: "❌", 500: "🔥"
+    }
+    status_display = f"{status_emojis.get(status_code, 'ℹ️')} {status_code}"
+
+    return html.Div([
+        html.Div([
+            html.H3(f"{filename} → {status_display}", style={'textAlign': 'center'}),
+            html.Img(src=content, style={'maxWidth': '50%', 'height': 'auto', 'display': 'block', 'margin': 'auto'})
+        ]),
+    ])
+
 
 @app.callback(
     Output("upload-status", "children"),
-    Output("image-preview", "src"),
+    # Output("image-preview", "src"),
     Input("upload-image", "contents"),
     State("upload-image", "filename"),
     prevent_initial_call=True
 )
-def upload_image(contents, filename):
-    if contents is not None:
+def upload_image(contents, filenames):
+    if contents is None:
+        return "Upload failed!", None
+
+    status_codes = {}
+    outputs = []
+
+    for content, filename in zip(contents, filenames):
         # Decode the image from Dash
-        _, content_string = contents.split(',')
+        _, content_string = content.split(',')
         image_data = base64.b64decode(content_string)
 
         # Send image to backend
         files = {"file": (filename, image_data, "image/png")}
         response = requests.post("http://localhost:8000/upload", files=files)
 
-        if response.status_code == 200:
-            return "Upload Successful!", contents
-        else:
-            return "Upload Failed!", None
+        # FIXME: I think this breaks if there are multiple files with the same name
+        status_codes[filename] = response.status_code
+        outputs.append(preview_image(content, filename, status_codes[filename]))
+
+    return outputs
+
 
 # # parse image upload contents
 # def parse_contents(contents, filename, date):
@@ -134,7 +153,12 @@ def upload_image(contents, filename):
 #     ])
 #
 #
-
+# def update_output(list_of_contents, list_of_names, list_of_dates):
+#     if list_of_contents is not None:
+#         children = [
+#             parse_contents(c, n, d) for c, n, d in
+#             zip(list_of_contents, list_of_names, list_of_dates)]
+#         return children
 
 # Run the app
 if __name__ == '__main__':
