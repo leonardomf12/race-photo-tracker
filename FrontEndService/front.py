@@ -3,14 +3,13 @@ import datetime
 import dash
 from dash import dcc, html, Input, Output, State, callback
 
+
+
 # STATIC OPTIONS
 USER_TYPES = ["runner", "photographer"]
 RUNNER_INPUT_FIELDS = {
     "race_name": "text",
     "bib_number": "number",
-}
-PHOTOGRAPHER_INPUT_FIELDS = {
-    "race_name": "text",
 }
 
 # Initialize the Dash app
@@ -21,76 +20,43 @@ server = app.server  # For deployment
 app.layout = html.Div([
     html.Div([
         html.H1("Race Photo Tracker"),
-        html.Label("Select a user type:"),
-        dcc.Dropdown(
-            id='user-type-selector',
-            options=[{'label': user_type.capitalize(), 'value': user_type} for user_type in USER_TYPES],
-            value=USER_TYPES[0],
-            clearable=False
-        )
     ]),
-    html.Div(id='dynamic-layout'),
+    html.Div([
+        html.H1("Input your information:"),
+        *[
+            dcc.Input(
+                id="input_{}".format(field_name),
+                type=field_type,
+                placeholder="input type {}".format(field_type),
+            )
+            for field_name, field_type in RUNNER_INPUT_FIELDS.items()
+        ],
+        html.Br(),
+        html.Div(id="runner-outputs"),
+    ]),
+    html.Br(),
+    dcc.Upload(
+        id='upload-image',
+        children=html.Div([
+            'Drag and Drop or ',
+            html.A('Select Files')
+        ]),
+        style={
+            'width': '100%',
+            'height': '60px',
+            'lineHeight': '60px',
+            'borderWidth': '1px',
+            'borderStyle': 'dashed',
+            'borderRadius': '5px',
+            'textAlign': 'center',
+            'margin': '10px'
+        },
+        # Allow multiple files to be uploaded
+        multiple=True
+    ),
+    html.Br(),
+    html.Div(id="image-upload-outputs"),
 ])
-
-
-# pick layout dynamically
-@callback(
-    Output('dynamic-layout', 'children'),
-    Input('user-type-selector', 'value')
-)
-def update_layout(selected_layout):
-    if selected_layout == "runner":
-        return html.Div([
-            html.H1("Input your information:"),
-            *[
-                dcc.Input(
-                    id="input_{}".format(field_name),
-                    type=field_type,
-                    placeholder="input type {}".format(field_type),
-                )
-                for field_name, field_type in RUNNER_INPUT_FIELDS.items()
-            ],
-            html.Br(),
-            html.Div(id="runner-outputs"),
-        ]),
-    elif selected_layout == 'photographer':
-        return html.Div([
-            html.H1("Input your information:"),
-            *[
-                dcc.Input(
-                    id="input_{}".format(field_name),
-                    type=field_type,
-                    placeholder="input type {}".format(field_type),
-                )
-                for field_name, field_type in PHOTOGRAPHER_INPUT_FIELDS.items()
-            ],
-            html.Br(),
-            dcc.Upload(
-                id='upload-image',
-                children=html.Div([
-                    'Drag and Drop or ',
-                    html.A('Select Files')
-                ]),
-                style={
-                    'width': '100%',
-                    'height': '60px',
-                    'lineHeight': '60px',
-                    'borderWidth': '1px',
-                    'borderStyle': 'dashed',
-                    'borderRadius': '5px',
-                    'textAlign': 'center',
-                    'margin': '10px'
-                },
-                # Allow multiple files to be uploaded
-                multiple=True
-            ),
-            html.Br(),
-            html.Div(id="photographer-outputs"),
-            html.Br(),
-            html.Div(id="image-upload-outputs"),
-        ]),
-    else:
-        return html.Div()  # Default empty layout
 
 
 # render the input values to screen
@@ -99,14 +65,6 @@ def update_layout(selected_layout):
     [Input("input_{}".format(field_name), "value") for field_name, field_type in RUNNER_INPUT_FIELDS.items()], suppress_callback_exceptions=True
 )
 def render_runner_outputs(*vals):
-    return " | ".join((str(val) for val in vals if val))
-
-
-@callback(
-    Output("photographer-outputs", "children"),
-    [Input("input_{}".format(field_name), "value") for field_name, field_type in PHOTOGRAPHER_INPUT_FIELDS.items()], suppress_callback_exceptions=True
-)
-def render_photographer_outputs(*vals):
     return " | ".join((str(val) for val in vals if val))
 
 
