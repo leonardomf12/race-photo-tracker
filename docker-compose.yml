@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   frontend:
     image: python:3.9
@@ -42,9 +40,11 @@ services:
       context: ./DBService
     container_name: psql_db_container
     volumes:
-      - psql_volume/:/var/lib/postgresql/data
+      - psql_volume:/var/lib/postgresql/data
     ports:
       - "5432:5432"
 
+volumes:
+  psql_volume:
 
 # To run services individually and force build: docker compose up --build <service_name>
