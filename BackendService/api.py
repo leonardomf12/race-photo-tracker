@@ -19,12 +19,12 @@ class UserData(BaseModel):
 
 @app.post("/submit-data")
 def submit_data(user: UserData):
-
     if database_tools.get_user_by_email(user.email) is None:
         # TODO: register if not present
         return {"message": f"{user.email} is not registered"}
 
     images = database_tools.get_images_by_bib_number(user.bib_number)
+
     return {"message": f"Received data for {user.email} @ BIB {user.bib_number} -> {images}"}
 
 
@@ -34,6 +34,7 @@ async def upload(
         metadata: str = Form(...),
 ):
     metadata = json.loads(metadata)
+
     file_path = UPLOAD_FOLDER / file.filename
     with file_path.open("wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
@@ -41,7 +42,7 @@ async def upload(
     # TODO: save image data to correct place (see DataService)
     try:
         database_tools.register_new_image(
-            path=str(file_path),
+            image_path=str(file_path),
             email=metadata.get("email"),
             bib_number=metadata.get("bib_number"),
         )

@@ -1,31 +1,25 @@
 services:
   frontend:
-    image: python:3.9
+    build:
+      context: ./FrontendService
     container_name: frontend_service
-    working_dir: /app
-    volumes:
-      - ./FrontendService:/app
     ports:
       - "8050:8050"
-    command: ["bash", "-c", "pip install -r requirements.txt && python app.py"]
 
   backend:
-    image: python:3.9
+    build:
+      context: ./BackendService
     container_name: backend_service
-    working_dir: /app
-    volumes:
-      - ./BackendService:/app
     ports:
       - "8000:8000"
-    command: ["bash", "-c", "pip install -r requirements.txt && uvicorn main:app --host 0.0.0.0 --port 8000 --reload"]
 
-  ml_service:
-    image: python:3.9
-    container_name: ml_service
-    working_dir: /app
-    volumes:
-      - ./MlService:/app
-    command: ["bash", "-c", "pip install -r requirements.txt && python ml_model.py"]
+#  ml_service:
+#    image: python:3.9
+#    container_name: ml_service
+#    working_dir: /app
+#    volumes:
+#      - ./MlService:/app
+#    command: ["bash", "-c", "pip install -r requirements.txt && python ml_model.py"]
 
 #  data_service:
 #    image: ubuntu:20.04
