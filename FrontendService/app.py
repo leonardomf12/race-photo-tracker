@@ -7,10 +7,15 @@ import requests
 from dash import dcc, html, Input, Output, State, callback
 
 
+# FRONTEND SERVER CONFIG
+BACKEND_PORT = 8000
+BACKEND_ADDRESS = "backend"
+ADDRESS = f"http://{BACKEND_ADDRESS}:{BACKEND_PORT}"
+
 # Start FastAPI server if not already running
 def start_backend():
     try:
-        response = requests.get("http://localhost:8000")
+        response = requests.get(ADDRESS)
         if response.status_code == 200:
             print("Backend is already running.")
             return
@@ -18,6 +23,7 @@ def start_backend():
         print("Starting backend...")
         subprocess.Popen(["uvicorn", "BackEndService.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"])
         time.sleep(2)  # Give it time to start
+
 
 start_backend()
 
@@ -87,7 +93,7 @@ app.layout = html.Div([
 )
 def send_request(n_clicks, *inputs):
     payload = {field_name: value for field_name, value in zip(RUNNER_INPUT_FIELDS.keys(), inputs)}
-    response = requests.post("http://localhost:8000/submit-data", json=payload)
+    response = requests.post(f"{ADDRESS}/submit-data", json=payload)
     return response.json().get("message", "No message returned from server.")
 
 
@@ -126,7 +132,7 @@ def upload_image(contents, filenames):
 
         # Send image to backend
         files = {"file": (filename, image_data, "image/png")}
-        response = requests.post("http://localhost:8000/upload", files=files)
+        response = requests.post(f"{ADDRESS}/upload", files=files)
 
         # FIXME: I think this breaks if there are multiple files with the same name
         status_codes[filename] = response.status_code
@@ -162,4 +168,6 @@ def upload_image(contents, filenames):
 
 # Run the app
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(
+        debug=True,
+    )
