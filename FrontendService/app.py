@@ -1,6 +1,7 @@
 import base64
 import subprocess
 import time
+import json
 
 import dash
 import requests
@@ -34,7 +35,7 @@ def start_backend():
 # STATIC OPTIONS
 USER_TYPES = ["runner", "photographer"]
 RUNNER_INPUT_FIELDS = {
-    "race_name": "text",
+    "email": "email",
     "bib_number": "number",
 }
 
@@ -119,9 +120,10 @@ def preview_image(content, filename, status_code):
     # Output("image-preview", "src"),
     Input("upload-image", "contents"),
     State("upload-image", "filename"),
+    *[State("input_{}".format(field_name), "value") for field_name, field_type in RUNNER_INPUT_FIELDS.items()],
     prevent_initial_call=True
 )
-def upload_image(contents, filenames):
+def upload_image(contents, filenames, email, bib_number):  #FIXME: signature explicitly enums / orders the fields defined in RUNNER_INPUT_FIELDS. If we change those, this will break (and defeat the purpose of having them defined with a list for flexibility)
     if contents is None:
         return "Upload failed!", None
 
@@ -135,7 +137,9 @@ def upload_image(contents, filenames):
 
         # Send image to backend
         files = {"file": (filename, image_data, "image/png")}
-        response = requests.post(f"{ADDRESS}/upload", files=files)
+        data = {"metadata": json.dumps({"email": email, "bib_number": bib_number})}
+
+        response = requests.post(f"{ADDRESS}/upload", files=files, data=data)
 
         # FIXME: I think this breaks if there are multiple files with the same name
         status_codes[filename] = response.status_code

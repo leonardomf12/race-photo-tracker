@@ -28,7 +28,7 @@ class User(Base):
 def get_images_by_bib_number(bib_number: int):
     session = SessionLocal()
     try:
-        query_res = session.query(User).filter(User.bib_number == bib_number)
+        query_res = session.query(User).filter(User.bib_number == bib_number).all()
         return [user.image_path for user in query_res]
     finally:
         session.close()
@@ -42,6 +42,7 @@ def get_user_by_email(email: str):
 
 def register_new_image(path: str, email: str, bib_number: int):
     session = SessionLocal()
+
     try:
         user = User(image_path=path, email=email, bib_number=bib_number)
         session.add(user)
