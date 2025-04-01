@@ -1,5 +1,50 @@
-version: '3'
 services:
-  hello-world:
-    image: hello-world
+  frontend:
+    image: python:3.9
+    container_name: frontend_service
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+    ports:
+      - "8050:8050"
+    command: ["bash", "-c", "pip install -r requirements.txt && python app.py"]
 
+  backend:
+    image: python:3.9
+    container_name: backend_service
+    working_dir: /app
+    volumes:
+      - ./backend:/app
+    ports:
+      - "8000:8000"
+    command: ["bash", "-c", "pip install -r requirements.txt && uvicorn main:app --host 0.0.0.0 --port 8000 --reload"]
+
+  ml_service:
+    image: python:3.9
+    container_name: ml_service
+    working_dir: /app
+    volumes:
+      - ./ml_service:/app
+    command: ["bash", "-c", "pip install -r requirements.txt && python ml_model.py"]
+
+  data_service:
+    image: ubuntu:20.04
+    container_name: data_container
+    volumes:
+      - ./dataset:/data # Dataset
+    command: [ "tail", "-f", "/dev/null" ]
+
+
+  psql_database:
+    build:
+      context: ./DBService
+    container_name: psql_db_container
+    volumes:
+      - psql_volume:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+volumes:
+  psql_volume:
+
+# To run services individually and force build: docker compose up --build <service_name>
