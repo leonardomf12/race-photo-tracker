@@ -8,6 +8,9 @@ from dash import dcc, html, Input, Output, State, callback
 
 
 # FRONTEND SERVER CONFIG
+FRONTEND_PORT = 8050
+FRONTEND_ADDRESS = "0.0.0.0"
+
 BACKEND_PORT = 8000
 BACKEND_ADDRESS = "backend"
 ADDRESS = f"http://{BACKEND_ADDRESS}:{BACKEND_PORT}"
@@ -21,11 +24,11 @@ def start_backend():
             return
     except requests.exceptions.ConnectionError:
         print("Starting backend...")
-        subprocess.Popen(["uvicorn", "BackEndService.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"])
+        subprocess.Popen(["uvicorn", "BackendService.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"])
         time.sleep(2)  # Give it time to start
 
 
-start_backend()
+# start_backend()
 
 
 # STATIC OPTIONS
@@ -169,5 +172,7 @@ def upload_image(contents, filenames):
 # Run the app
 if __name__ == '__main__':
     app.run(
+        host=FRONTEND_ADDRESS,
+        port=FRONTEND_PORT,
         debug=True,
     )
