@@ -1,19 +1,32 @@
--- Create the database only if it doesn't exist (not needed in Docker if using `POSTGRES_DB`)
--- CREATE DATABASE mydatabase;
-
--- Switch to the correct database (only needed if running outside Docker)
--- \c mydatabase;
-
--- Create the users table if it doesn’t exist
-CREATE TABLE IF NOT EXISTS users (
-    bib_number SERIAL PRIMARY KEY,
-    image_path TEXT NOT NULL,
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
     email TEXT UNIQUE NOT NULL
 );
 
--- Insert dummy data
-INSERT INTO users (bib_number, image_path, email) VALUES
-(1, 'image1', 'alice@example.com'),
-(2, 'image2', 'bob@example.com'),
-(3, 'image3', 'charlie@example.com')
-ON CONFLICT (email) DO NOTHING;  -- Avoid duplicate inserts
+CREATE TABLE races (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    date DATE NOT NULL
+);
+
+CREATE TABLE user_race (
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    race_id INTEGER REFERENCES races(id) ON DELETE CASCADE,
+    bib_number INTEGER NOT NULL,
+    PRIMARY KEY (user_id, race_id),
+    UNIQUE (race_id, bib_number)
+);
+
+CREATE TABLE images (
+    id SERIAL PRIMARY KEY,
+    image_path TEXT NOT NULL
+);
+
+CREATE TABLE image_bibs (
+    image_id INTEGER REFERENCES images(id) ON DELETE CASCADE,
+    race_id INTEGER REFERENCES races(id) ON DELETE CASCADE,
+    bib_number INTEGER NOT NULL,
+    FOREIGN KEY (race_id, bib_number) REFERENCES user_race(race_id, bib_number) ON DELETE CASCADE,
+    PRIMARY KEY (image_id, race_id, bib_number)
+);

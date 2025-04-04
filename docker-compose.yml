@@ -21,12 +21,12 @@ services:
 #      - ./MlService:/app
 #    command: ["bash", "-c", "pip install -r requirements.txt && python ml_model.py"]
 
-#  data_service:
-#    image: ubuntu:20.04
-#    container_name: data_container
-#    volumes:
-#      - ./dataset:/data # Dataset
-#    command: [ "tail", "-f", "/dev/null" ]
+  data_service:
+    image: ubuntu:20.04
+    container_name: data_container
+    volumes:
+      - ./DataService/dataset:/data # Dataset
+    command: [ "tail", "-f", "/dev/null" ]
 
 
   psql_database:
