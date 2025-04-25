@@ -13,13 +13,13 @@ services:
     ports:
       - "8000:8000"
 
-#  ml_service:
-#    image: python:3.9
-#    container_name: ml_service
-#    working_dir: /app
-#    volumes:
-#      - ./MlService:/app
-#    command: ["bash", "-c", "pip install -r requirements.txt && python ml_model.py"]
+  ml_service:
+    image: python:3.9
+    container_name: ml_service
+    working_dir: /app
+    volumes:
+      - ./MlService:/app
+    command: ["bash", "-c", "pip install -r requirements.txt && python ml_model.py"]
 
   data_service:
     image: ubuntu:20.04
