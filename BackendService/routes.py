@@ -61,8 +61,13 @@ async def list_races(db: Session = Depends(get_db),
             for race in races]
 
 @router.get("/races/{race_id}")
-async def get_race_by_id():
-    pass
+async def get_race_by_id(race_id: int,
+                         db: Session = Depends(get_db),
+                         response_model=schemas.RaceResponse):
+    db_race = db.get(models.Race, race_id)
+    if db_race is None:
+        raise HTTPException(status_code=404, detail="Race not found")
+    return schemas.RaceResponse.model_validate(db_race)
 
 
 @router.get("/races/{race_id}/bibs/{bib_number}/images/")
