@@ -54,9 +54,11 @@ async def create_user(user: schemas.UserCreate,
 
 
 @router.get("/races/")
-async def list_races(db: Session = Depends(get_db)):
-    return db.query(models.Race).all()
-
+async def list_races(db: Session = Depends(get_db),
+                     response_model = list[schemas.UserResponse]):
+    races = db.query(models.Race).all()
+    return [schemas.RaceResponse.model_Validate(race)
+            for race in races]
 
 @router.get("/races/{race_id}")
 async def get_race_by_id():
