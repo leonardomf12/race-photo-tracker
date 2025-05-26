@@ -30,3 +30,5 @@ CREATE TABLE image_bibs (
     FOREIGN KEY (race_id, bib_number) REFERENCES user_race(race_id, bib_number) ON DELETE CASCADE,
     PRIMARY KEY (image_id, race_id, bib_number)
 );
+
+\echo '✅ Initialization complete'
