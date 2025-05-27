@@ -40,12 +40,14 @@ class RaceResponse(BaseModel):
     name: str
     date: date
 
-class RegistrationRequest(BaseModel):
+class RegistrationCreate(BaseModel):
     user_id: int
     race_id: int
     bib_number: PositiveInt
 
 class RegistrationResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     user_id: int
     race_id: int
     bib_number: PositiveInt
